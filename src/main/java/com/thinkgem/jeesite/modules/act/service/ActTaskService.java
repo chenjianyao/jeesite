@@ -9,7 +9,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
+import com.thinkgem.jeesite.common.service.ServiceException;
 import org.activiti.bpmn.model.BpmnModel;
 import org.activiti.engine.FormService;
 import org.activiti.engine.HistoryService;
@@ -98,7 +101,9 @@ public class ActTaskService extends BaseService {
 	private RepositoryService repositoryService;
 	@Autowired
 	private IdentityService identityService;
-	
+
+	private static Pattern businessTablePattern = Pattern.compile("[a-z0-9_\\.\\, ]*", Pattern.CASE_INSENSITIVE);
+
 	/**
 	 * 获取待办列表
 	 * @param procDefKey 流程定义标识
@@ -395,7 +400,7 @@ public class ActTaskService extends BaseService {
 		Map<String, Object> vars = Maps.newHashMap();
 		return startProcess(procDefKey, businessTable, businessId, title, vars);
 	}
-	
+
 	/**
 	 * 启动流程
 	 * @param procDefKey 流程定义KEY
@@ -420,6 +425,12 @@ public class ActTaskService extends BaseService {
 		// 设置流程标题
 		if (StringUtils.isNotBlank(title)){
 			vars.put("title", title);
+		}
+
+		// 安全过滤
+		Matcher matcher = businessTablePattern.matcher(businessTable);
+		if (!matcher.matches()) {
+			throw new ServiceException("非法参数 businessTable");
 		}
 		
 		// 启动流程
@@ -641,7 +652,7 @@ public class ActTaskService extends BaseService {
 	public ActivityImpl[] insertTasksAfter(String procDefId, String procInsId, String targetTaskDefinitionKey, Map<String, Object> variables, String... assignees) {
 		List<String> assigneeList = new ArrayList<String>();
 		assigneeList.add(Authentication.getAuthenticatedUserId());
-		assigneeList.addAll(CollectionUtils.arrayToList(assignees));
+		assigneeList.addAll((List<String>)CollectionUtils.arrayToList(assignees));
 		String[] newAssignees = assigneeList.toArray(new String[0]);
 		ProcessDefinitionEntity processDefinition = (ProcessDefinitionEntity)repositoryService.getProcessDefinition(procDefId);
 		ActivityImpl prototypeActivity = ProcessDefUtils.getActivity(processEngine, processDefinition.getId(), targetTaskDefinitionKey);
@@ -675,7 +686,7 @@ public class ActTaskService extends BaseService {
 		RuntimeActivityDefinitionEntityIntepreter radei = new RuntimeActivityDefinitionEntityIntepreter(info);
 
 		radei.setPrototypeActivityId(targetTaskDefinitionKey);
-		radei.setAssignees(CollectionUtils.arrayToList(assignees));
+		radei.setAssignees((List<String>)CollectionUtils.arrayToList(assignees));
 		radei.setSequential(isSequential);
 		
 		ProcessDefinitionEntity processDefinition = (ProcessDefinitionEntity)repositoryService.getProcessDefinition(procDefId);
@@ -706,7 +717,7 @@ public class ActTaskService extends BaseService {
 
 		RuntimeActivityDefinitionEntityIntepreter radei = new RuntimeActivityDefinitionEntityIntepreter(info);
 		radei.setPrototypeActivityId(prototypeActivityId);
-		radei.setAssignees(CollectionUtils.arrayToList(assignees));
+		radei.setAssignees((List<String>)CollectionUtils.arrayToList(assignees));
 		radei.setNextActivityId(nextActivityId);
 
 		ActivityImpl[] activities = new ChainedActivitiesCreator().createActivities(processEngine, procDef, info);

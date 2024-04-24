@@ -129,7 +129,7 @@ public class UserController extends BaseController {
 		systemService.saveUser(user);
 		// 清除当前用户缓存
 		if (user.getLoginName().equals(UserUtils.getUser().getLoginName())){
-			UserUtils.clearCache();
+			UserUtils.clearCache(UserUtils.getUser());
 			//UserUtils.getCacheMap().clear();
 		}
 		addMessage(redirectAttributes, "保存用户'" + user.getLoginName() + "'成功");
@@ -289,7 +289,8 @@ public class UserController extends BaseController {
 			model.addAttribute("message", "保存用户信息成功");
 		}
 		model.addAttribute("user", currentUser);
-		model.addAttribute("Global", new Global());
+		//修改Global 没有私有构造函数，实现懒汉式单例模式.在第一次调用的时候实例化自己！
+		model.addAttribute("Global", Global.getInstance());
 		return "modules/sys/userInfo";
 	}
 

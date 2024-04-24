@@ -26,7 +26,7 @@ import com.thinkgem.jeesite.modules.sys.entity.Menu;
 import com.thinkgem.jeesite.modules.sys.entity.User;
 
 /**
- * 字典工具类
+ * 日志工具类
  * @author ThinkGem
  * @version 2014-11-7
  */
@@ -58,6 +58,7 @@ public class LogUtils {
 			log.setRequestUri(request.getRequestURI());
 			log.setParams(request.getParameterMap());
 			log.setMethod(request.getMethod());
+			log.preInsert();
 			// 异步保存日志
 			new SaveLogThread(log, handler, ex).start();
 		}
@@ -98,7 +99,6 @@ public class LogUtils {
 				return;
 			}
 			// 保存日志信息
-			log.preInsert();
 			logDao.insert(log);
 		}
 	}
